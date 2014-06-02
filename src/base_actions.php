@@ -14,7 +14,7 @@
 *
 * @package Papaya-Modules
 * @subpackage Free-Actions
-* @version $Id: base_actions.php 39627 2014-03-19 13:20:05Z gies $
+* @version $Id: base_actions.php 39840 2014-05-26 15:21:20Z kersken $
 */
 
 /**
@@ -378,7 +378,7 @@ class base_actions extends base_db {
   * @param string $group
   * @param string $action
   * @param mixed $params optional, default NULL
-  * @return int
+  * @return mixed array return values of each call or boolean FALSE if none
   */
   function call($group, $action, $params = NULL) {
     // Determine the action id and auto-register or exit if it does not exist
@@ -392,23 +392,23 @@ class base_actions extends base_db {
         $actionId = $this->registerAction($group, $action);
       }
       if ($actionId === NULL) {
-        return 0;
+        return FALSE;
       }
     }
     // Get the matching observers and exit if there aren't any
     $observers = $this->getObserversByActionId($actionId);
     if (empty($observers)) {
-      return 0;
+      return FALSE;
     }
     // Load the observers (connector modules)
     $pluginloaderObj = $this->papaya()->plugins;
     $connectors = array();
     foreach ($observers as $observer) {
-      $connectors[] = $pluginloaderObj->get($observer, $this);
+      $connectors[$observer] = $pluginloaderObj->get($observer, $this);
     }
     // Now check each connector, and if it has got a matching method, call it
-    $counter = 0;
-    foreach ($connectors as $connector) {
+    $result = array();
+    foreach ($connectors as $observer => $connector) {
       if (is_object($connector)) {
         if (method_exists($connector, $action)) {
           // Check for recursion
@@ -436,7 +436,7 @@ class base_actions extends base_db {
                 $action
               )
             );
-            return $counter;
+            return $result;
           }
           // Is this one of the new-style connectors with a setConfiguration() method?
           if (method_exists($connector, 'setConfiguration')) {
@@ -445,8 +445,7 @@ class base_actions extends base_db {
             }
             $connector->setConfiguration($this->baseOptions);
           }
-          $counter++;
-          $connector->$action($params);
+          $result[$observer] = $connector->$action($params);
         }
       } else {
         $this->logMsg(
@@ -457,7 +456,7 @@ class base_actions extends base_db {
         );
       }
     }
-    return $counter;
+    return $result;
   }
 }
 
