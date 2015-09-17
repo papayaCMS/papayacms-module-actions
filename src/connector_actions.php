@@ -56,10 +56,11 @@ class connector_actions extends base_plugin {
   * @param string $group
   * @param string $action
   * @param mixed $params optional, default NULL
-  * @return int
+  * @param boolean $returnFirstResult optional, default FALSE
+  * @return mixed array return values of each call, one call, or boolean FALSE if none
   */
-  function call($group, $action, $params = NULL) {
+  function call($group, $action, $params = NULL, $returnFirstResult = FALSE) {
     $this->_initBaseActions();
-    return $this->baseActions->call($group, $action, $params);
+    return $this->baseActions->call($group, $action, $params, $returnFirstResult);
   }
 }

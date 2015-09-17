@@ -378,9 +378,10 @@ class base_actions extends base_db {
   * @param string $group
   * @param string $action
   * @param mixed $params optional, default NULL
+  * @param boolean $returnFirstResult optional, default FALSE
   * @return mixed array return values of each call or boolean FALSE if none
   */
-  function call($group, $action, $params = NULL) {
+  function call($group, $action, $params = NULL, $returnFirstResult = FALSE) {
     // Determine the action id and auto-register or exit if it does not exist
     $actionId = $this->getActionIdByGroupAndAction($group, $action);
     if ($actionId === NULL) {
@@ -446,6 +447,9 @@ class base_actions extends base_db {
             $connector->setConfiguration($this->baseOptions);
           }
           $result[$observer] = $connector->$action($params);
+          if ($returnFirstResult) {
+            return $result[$observer];
+          }
         }
       } else {
         $this->logMsg(
